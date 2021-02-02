@@ -13,7 +13,9 @@ Chrome 和 Firefox 都对内容脚本进行了专门的介绍，有兴趣的读�
 - [Content scripts - Chrome Developers](https://developer.chrome.com/docs/extensions/mv2/content_scripts/)
 - [Content scripts - Mozilla | MDN](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_scripts)
 
-如果你懒得看，那么你只需要记住这点就可以无障碍的阅读后面的内容了：**内容脚本运行在用户打开的网页里，相当于浏览器帮你插入了一个指向你扩展程序内的 js 文件的 `<script>` 元素。**当然，内容脚本跟普通的 `<script>` 肯定是有不同之处的，详细介绍可以阅读上面的官方文档。
+如果你懒得看，那么你只需要记住这点就可以无障碍的阅读后面的内容了：**内容脚本运行在用户打开的网页里，相当于浏览器帮你插入了一个指向你扩展程序内的 js 文件的 `<script>` 元素**。
+
+> 当然，内容脚本跟普通的 `<script>` 肯定是有不同之处的，但这篇文章并没有涉及到这些不同，感兴趣的读者可以阅读上面的官方文档。
 
 ## 用鼠标划词的情况
 
@@ -21,8 +23,8 @@ Chrome 和 Firefox 都对内容脚本进行了专门的介绍，有兴趣的读�
 
 ```js
 document.addEventListener('mouseup', () => {
-  // 获取页面上的选中文本和文本的位置的方式会在下一篇文章中介绍
-  const text = getSelectionText()
+  // 获取页面中选中的文本。这是最常用的一种方式，但并不能覆盖到所有情况，下一篇文章中会详细介绍。
+  const text = window.getSelection().toString()
   // 如果页面中没有选中的文本，那么什么都不做
   if(!text) return
   // 如果有，那么执行下一步操作，例如显示一个翻译按钮，或者直接弹出翻译窗口
