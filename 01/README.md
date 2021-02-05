@@ -1,21 +1,6 @@
 # 检测用户的划词操作
 
-划词翻译的第一步就是检测用户的划词操作。为了能在任意页面检测到用户的划词操作，我们需要在每个页面都注入一段检测代码，这时候就需要用到扩展程序提供的内容脚本功能了。
-
-## 内容脚本简介
-
-内容脚本（Content scripts）是扩展程序最重要的一个组成部分，因为大部分扩展程序都需要对用户打开的页面做一些监听或修改以实现扩展的功能，很多扩展程序甚至只需要内容脚本就可以完成它们的功能，网络上很流行的[油猴脚本](https://greasyfork.org/zh-CN/scripts)就属于这一类。
-
-> 划词翻译的第一个版本就只用到了内容脚本，但后面的文章会解释为什么只用内容脚本是不够的。
-
-Chrome 和 Firefox 都对内容脚本进行了专门的介绍，有兴趣的读者可以先看一遍：
-
-- [Content scripts - Chrome Developers](https://developer.chrome.com/docs/extensions/mv2/content_scripts/)
-- [Content scripts - Mozilla | MDN](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Content_scripts)
-
-如果你懒得看，那么你只需要记住这点就可以无障碍的阅读后面的内容了：**内容脚本运行在用户打开的网页里，相当于浏览器帮你插入了一个指向你扩展程序内的 js 文件的 `<script>` 元素**。
-
-> 当然，内容脚本跟普通的 `<script>` 肯定是有不同之处的，但这篇文章并没有涉及到这些不同，感兴趣的读者可以阅读上面的官方文档。
+我会在文章的末尾将文章中写过的代码打包成一个扩展程序并在浏览器中运行，目前，我们先探讨一下如何使用前端技术来检测用户的划词操作。
 
 ## 用鼠标划词的情况
 
@@ -27,6 +12,7 @@ document.addEventListener('mouseup', () => {
   const text = window.getSelection().toString()
   // 如果页面中没有选中的文本，那么什么都不做
   if(!text) return
+  console.log(text)
   // 如果有，那么执行下一步操作，例如显示一个翻译按钮，或者直接弹出翻译窗口
 })
 ```
@@ -43,6 +29,7 @@ document.addEventListener('mouseup', () => {
   window.setTimeout(() => {
     const text = window.getSelection().toString()
     if(!text) return
+    console.log(text)
     // ...
   })
 })
@@ -60,10 +47,10 @@ document.addEventListener('mouseup', () => console.log(window.getSelection().toS
 
 然后执行以下步骤：
 
-1. 划选一段文本，例如“就划选双引号里面的这段吧”。此时控制台会正常打印出来你划选的文本，这是符合我们的预期的。
+1. 划选一段文本，例如“就划选双引号里面的这段吧”。
 2. 点击你划选的这段文本。
 
-点击之后，页面上选中的文本就消失了，但是，此时控制台仍然打印出了你之前划选的文本——这就不符合我们的预期了。
+第一步划选文本之后，控制台会正常打印出来你划选的文本，这是符合我们的预期的。在第二步中，点击选中文本之后，选中的文本就消失了，但是，此时控制台仍然打印出了你之前划选的文本——这就不符合我们的预期了。
 
 如果你没对这种情况做处理，那么就会出现用户点击了他划选的文本后，页面上划选文本消失了，可是我们却显示出来了翻译按钮情况。
 
@@ -73,11 +60,11 @@ document.addEventListener('mouseup', () => console.log(window.getSelection().toS
 document.addEventListener('mouseup', () => window.setTimeout(() => console.log(window.getSelection().toString())))
 ```
 
-有些用户会在触摸屏上使用我们的扩展程序（例如 Microsoft Surface，这是[真实存在的案例](https://github.com/lmk123/crx-selection-translate/issues/412)），你还可以考虑加上对 touch 事件的支持，这就不在我们的讨论范围之内了。
+有些用户会在触摸屏上使用我们的扩展程序（例如 Microsoft Surface，这是[真实存在的案例](https://github.com/lmk123/crx-selection-translate/issues/412)），你还可以考虑加上对 touch 事件的支持，不过这就不在我们的讨论范围之内了。
 
 ## 鼠标划词之外的情况
 
-在页面上产生选中的文本并不是只有用鼠标这一种情况，例如，用户可以点击一个文本框，输入一些文字后，用快捷键 Ctrl + A 全选里面的文本；另外，Ctrl + Z 也会还原在文本框中之前选中的文本，所以单单只检测 `Ctrl + A` 也不靠谱。最理想的办法是，有没有一种跟用户操作无关的检测方式，无论页面中选中的文本是怎么产生的，我们都能得到通知。
+在页面上产生选中的文本并不是只有用鼠标这一种情况，一些快捷键也可以选中文本，例如 Ctrl + A；另外，Ctrl + Z 也会还原在文本框中之前选中的文本。不同的浏览器、操作系统的快捷键不尽相同，所以靠枚举快捷键来检测选中文本的操作也不靠谱。最理想的办法是，有没有一种跟用户操作无关的检测方式，无论页面中选中的文本是怎么产生的，我们都能得到通知。
 
 而事实上，浏览器也确实提供了这样的检测方式：[`selectionchange` 事件](https://developer.mozilla.org/en-US/docs/Web/API/Document/selectionchange_event)。你可以在浏览器控制台中输入以下代码，然后在页面上用鼠标或 Ctrl + A 选中文本试试：
 
@@ -100,21 +87,21 @@ document.addEventListener('selectionchange', () => console.log(window.getSelecti
 
 ## 跨 iframe 的划词操作检测
 
-当我们开发自己的网站时，我们只需要关注自己网站的结构就可以了，但内容脚本可能会被注入到互联网里的任何网站里，这些网站使用的技术五花八门，我们的扩展程序可能在大部分网站里都能正常工作，但偶尔就会在一些特定的网站出现问题；反过来，我们的扩展程序也可能会导致一些网站不能正常工作。
+当我们开发自己的网站时，我们只需要关注自己网站的结构就可以了，但作为扩展程序时，我们的代码会被注入到互联网里的任何网站里，这些网站使用的技术五花八门，我们的扩展程序可能在大部分网站里都能正常工作，但偶尔就会在一些特定的网站出现问题；反过来，我们的扩展程序也可能会导致一些网站不能正常工作。
 
 后面我会专门用一篇文章介绍如何尽可能的避免我们的扩展程序和用户的网页产生冲突，在这篇文章里，我先针对在有 iframe 的页面里进行划词检测的情况进行介绍。
 
-内容脚本有一个 `"all_frames": true` 的选项，意思是将我们声明的内容脚本注入到标签页的每一个窗口中，既包括顶层窗口（topmost window，即 [`window.top`](https://developer.mozilla.org/en-US/docs/Web/API/Window/top)），也包括 iframe 或 frame 元素里的窗口。
+扩展程序支持将我们的代码注入到标签页的每一个窗口中运行，既包括顶层窗口（topmost window，即 [`window.top`](https://developer.mozilla.org/en-US/docs/Web/API/Window/top)），也包括 iframe 或 frame 元素里的窗口。
 
-划词翻译一开始就用了这种方式覆盖了在 iframe 中划词的场景，但是，这种简单的处理方式暴露出了这些问题：
+划词翻译一开始就用了这种方式，这样一来，每个窗口里都有各自的翻译按钮和翻译结果，同一个标签页的多个窗口之间相互独立，互不干扰。但是，这种简单的处理方式暴露出了这些问题：
 
 - 翻译结果的弹窗被限制在了 iframe 的可视区域里，不能完整显示，见 [lmk123/crx-selection-translate#834](https://github.com/lmk123/crx-selection-translate/issues/834)。
 - 翻译结果的弹窗被顶层窗口的元素遮挡了，见 [lmk123/crx-selection-translate#840](https://github.com/lmk123/crx-selection-translate/issues/840)。
 - 有的 iframe 宽度很小，导致被翻译结果弹窗撑开了横向或纵向滚动条，见 [lmk123/crx-selection-translate#873](https://github.com/lmk123/crx-selection-translate/issues/873)。
 
-这些问题出现的原因都是同一个，即每个 iframe 里都有一个翻译结果弹窗，解决的办法也是同一个，也就是只在顶层窗口显示翻译结果弹窗。
+解决这些问题的办法只有一个，就是只在顶层窗口显示翻译结果弹窗。
 
-这种情况下，我们就需要将内容脚本一分为二了：
+这种情况下，我们就需要将我们的代码一分为二了：
 
 - 一部分代码注入到所有窗口中（当然，也包括顶层窗口自己），专门用来检测鼠标划词、按下辅助键等用户操作，并通知顶层窗口。
 - 另一部分代码只注入到顶层窗口中，用于接收通知并做出反应，例如显示翻译结果弹窗。
@@ -143,12 +130,15 @@ window.addEventListener('message', ({data}) => {
     case '用户用鼠标划词了':
       const text = data.text
       if(text) {
+        console.log(text)
         // 执行后续操作，例如显示翻译按钮
       }
       break
   }
 })
 ```
+
+### 一个兼容性问题
 
 这段代码在 Chrome 中运行正常，但是在 Firefox 中就会报错——恭喜你，你遇到了第一个属于扩展程序的“兼容性问题”。
 
@@ -185,6 +175,7 @@ window.addEventListener('message', ({data}) => {
     case '用户用鼠标划词了':
       const text = msg.text
       if(text) {
+        console.log(text)
         // ...
       }
       break
@@ -194,13 +185,21 @@ window.addEventListener('message', ({data}) => {
 
 这样就可以同时兼容 Chrome 和 Firefox 了。
 
-注意，在这篇文章中，我们只发送了用户选中的文本内容，但在实际情况中，我们需要发送更多信息，例如：
+## 将代码打包成扩展程序并运行在浏览器中
 
-- 我们需要 `mouseup` 事件时鼠标指针的 X 轴和 Y 轴的位置确定翻译按钮的显示位置
-- 我们需要选中文本的位置，确定翻译结果弹窗的位置。而且，这个位置并不是静态的，例如用户在 iframe 里划选了文本，但在顶层窗口滚动了网页，此时翻译结果弹窗就需要重新定位。
-- 我们甚至需要将 Event 对象发送给顶层窗口，例如，如果划词操作是在顶层窗口产生的，我们需要使用 `event.target` 判断这次划词操作是否发生在我们的翻译结果弹窗里，但很显然，`window.postMessage()` 是发送不了的。
+到目前为止，我们有两个文件：
 
-这些问题会在下一篇文章里介绍。
+- `content-script-in-all-frames.js` 会注入到所有窗口之中，用于检测用户的划词操作。
+- `content-script-in-topmost-window.js` 只会注入到顶层窗口，用于接收用户的操作并做出反应。
+
+现在，我们就来将这两个文件打包成一个扩展程序并运行在浏览器中。
+
+<details>
+<summary>展开阅读</summary>
+
+## TODO
+
+</details>
 
 ## 总结
 
@@ -211,4 +210,10 @@ window.addEventListener('message', ({data}) => {
 - 解决跨 iframe 划词的相关问题。
 - 遇到并解决了第一个属于扩展程序的兼容性问题（~~就 Firefox 事多~~后面的文章中还有更多）。
 
-如果你对这篇文章的内容有疑问，欢迎给我提 issue。
+到目前为止，我们只发送了用户选中的文本内容，但在实际情况中，我们需要发送更多信息，例如：
+
+- 我们需要 `mouseup` 事件时鼠标指针的 X 轴和 Y 轴的位置确定翻译按钮的显示位置
+- 我们需要选中文本的位置，确定翻译结果弹窗的位置。而且，这个位置并不是静态的，例如用户在 iframe 里划选了文本，但在顶层窗口滚动了网页，此时翻译结果弹窗就需要重新定位。
+- 我们甚至需要将 Event 对象发送给顶层窗口，例如，如果划词操作是在顶层窗口产生的，我们需要使用 `event.target` 判断这次划词操作是否发生在我们的翻译结果弹窗里，但很显然，`window.postMessage()` 是发送不了的。
+
+这些问题会在下一篇文章里介绍。如果你对这篇文章的内容有疑问，欢迎给我提 issue。
